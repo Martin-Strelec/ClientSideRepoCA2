@@ -5,14 +5,13 @@ const pageNavigation = document.getElementById('navigation');
 
 const itemsOnPage = 80;
 var pageIndexPrevious = 0;
-var pageIndexNext =+ itemsOnPage; 
+var pageIndexNext = + itemsOnPage;
 var hotspotsList;
 
 fetchHotspotList(`https://entities.nft.helium.io/v2/hotspots?subnetwork=iot&cursor=`);
 
 createCountryCheckBox(inputs);
 createStatusChechBox(inputs);
-createTextInputs(inputs);
 
 createHeading(heading);
 
@@ -30,6 +29,32 @@ function turnPage(pageIndex) {
     fetchHotspots();
 }
 
+function checkCountry(CountryValue, country) {
+    if (country.checked) {
+        if (country.value == `${CountryValue}`) {
+            return true
+        }
+        else {
+            return false;
+        }
+    }
+}
+function checkStatus(StatusValue) {
+    var status = document.querySelector('input[name=status]:checked').value;
+    var passed;
+    if (status != 'All') {
+        if (status == `${StatusValue}`) {
+            return true
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return true;
+    }
+}
+
 async function fetchHotspotList(url) {
     const options = {
         method: 'GET'
@@ -40,9 +65,11 @@ async function fetchHotspotList(url) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         hotspotsList = await response.json();
+        createTextInputs(inputs);
+        createFetchButton(inputs);
         fetchHotspots();
     } catch (error) {
-        document.getElementById('heading').textContent = `Could not fetch hotspot-list: ${error.message}`;
+        document.getElementById('error').textContent = `Could not fetch hotspot-list: ${error.message}`;
     }
 }
 
@@ -65,43 +92,73 @@ async function fetchHotspotData(key) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const hotspotData = await response.json();
-        renderHotspotData(hotspotData, document.getElementById('hotspots'), null);
+        if (checkStatus(hotspotData.hotspot_infos.iot.is_active)) {
+            const countries = document.querySelectorAll('input[id^=country-checkbox-]:checked');
+            if (countries.length != 0) {
+                countries.forEach(country => {
+                    if (checkCountry(hotspotData.hotspot_infos.iot.country, country)) {
+                        renderHotspotData(hotspotData, document.getElementById('hotspots'));
+                    }
+                })
+            }
+            else {
+                renderHotspotData(hotspotData, document.getElementById('hotspots'));
+            }
+        }
+
     } catch (error) {
-        document.getElementById('heading').textContent = `Could not fetch hotspot-info: ${error.message}`;
+        document.getElementById('error').textContent = `Could not fetch hotspot-info: ${error.message}`;
     }
 }
 
 function createStatusChechBox(container) {
     //Create checkboxes for state of the Hotspot
-    const checkboxesContainer = document.createElement('div');
-    checkboxesContainer.classList.add('inputContainers');
+    const radiosContainer = document.createElement('div');
+    radiosContainer.classList.add('inputContainers');
 
     const header = document.createElement('h3');
 
     header.textContent = "Status: ";
-    checkboxesContainer.appendChild(header);
+    radiosContainer.appendChild(header);
+
+    const radioContainer = document.createElement('div');
+
+    const radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.id = `status-radio-all`;
+    radio.value = 'All';
+    radio.name = 'status';
+    radio.setAttribute('checked', true);
+    const label = document.createElement('label');
+    label.textContent = `All`;
+    label.setAttribute("for", `status-radio-all`);
+
+    radioContainer.appendChild(label);
+    radioContainer.appendChild(radio);
+    radiosContainer.appendChild(radioContainer);
 
     const statuses = [true, false];
     statuses.forEach(status => {
-        const checkboxContainer = document.createElement('div');
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `city-checkbox-${status ? "active" : "notActive"}`;
-        checkbox.value = `${status}`;
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.id = `status-radio-${status ? "true" : "false"}`;
+        radio.value = status;
+        radio.name = 'status';
         const label = document.createElement('label');
         label.textContent = `${status ? "Active" : "Not Active"}`;
-        label.setAttribute("for", `city-checkbox-${status}`);
+        label.setAttribute("for", `status-radio-${status}`);
 
-        checkboxContainer.appendChild(label);
-        checkboxContainer.appendChild(checkbox);
-        checkboxesContainer.appendChild(checkboxContainer);
+        radioContainer.appendChild(label);
+        radioContainer.appendChild(radio);
+        radiosContainer.appendChild(radioContainer);
     })
 
-    container.appendChild(checkboxesContainer);
+    container.appendChild(radiosContainer);
 }
 
 function createCountryCheckBox(container) {
+    const countries = ['Ireland', 'United States', 'Canada', 'Česko', 'Slovensko', 'United Kingdom'];
 
     // Create the checkbox
     const checkboxesContainer = document.createElement('div');
@@ -111,17 +168,17 @@ function createCountryCheckBox(container) {
     header.textContent = "Countries: ";
     checkboxesContainer.appendChild(header);
 
-    const countries = ["Ireland", "United States", "United Kingdom", "Canada", "Česko", "Slovensko"];
     countries.forEach(country => {
         const checkboxContainer = document.createElement('div');
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `city-checkbox-${country}`;
+        checkbox.id = `country-checkbox-${country}`;
         checkbox.value = `${country}`;
+        checkbox.name = 'countries';
         const label = document.createElement('label');
         label.textContent = `${country}`;
-        label.setAttribute("for", `city-checkbox-${country}`);
+        label.setAttribute("for", `country-checkbox-${country}`);
 
         checkboxContainer.appendChild(label);
         checkboxContainer.appendChild(checkbox);
@@ -152,7 +209,7 @@ function createTextInputs(container) {
     assetKeyBtn.type = 'button';
     assetKeyBtn.id = 'assetKeyBtn';
     assetKeyBtn.value = 'Search';
-    assetKeyBtn.addEventListener('click', searchByAssetKey(assetKeyTextInput.value));
+    assetKeyBtn.addEventListener('click', () => { searchByAssetKey(assetKeyTextInput.value) });
 
     buttonContainer.appendChild(assetKeyTextInput);
     buttonContainer.appendChild(assetKeyBtn);
@@ -161,6 +218,22 @@ function createTextInputs(container) {
     container.appendChild(textInputContainer);
 }
 
+function createFetchButton(container) {
+    const buttonContainer = document.createElement('div');
+
+    const fetchBtn = document.createElement('input');
+    fetchBtn.type = 'button';
+    fetchBtn.id = 'fetchBtn';
+    fetchBtn.value = 'Find Hotspots';
+    fetchBtn.addEventListener('click', () => {
+        document.getElementById('hotspots').innerHTML = "";
+        fetchHotspots()
+    })
+
+
+    buttonContainer.appendChild(fetchBtn);
+    container.appendChild(buttonContainer);
+}
 function createPageNavigation(pageIndex, container) {
     const buttonsContainer = document.createElement('div');
     buttonsContainer.classList.add('inputContainers');
@@ -175,8 +248,8 @@ function createPageNavigation(pageIndex, container) {
         previousPage.type = 'button';
         previousPage.id = 'assetKeyBtn';
         previousPage.value = 'Previous Page';
-        previousPage.addEventListener('click',() => {
-            
+        previousPage.addEventListener('click', () => {
+
             pageIndexNext = pageIndexPrevious;
             pageIndexPrevious -= itemsOnPage;
             turnPage();
@@ -189,7 +262,7 @@ function createPageNavigation(pageIndex, container) {
         nextPage.type = 'button';
         nextPage.id = 'assetKeyBtn';
         nextPage.value = 'NextPage';
-        nextPage.addEventListener('click',() => {
+        nextPage.addEventListener('click', () => {
             pageIndexPrevious = pageIndexNext;
             pageIndexNext += itemsOnPage;
             turnPage();
@@ -200,8 +273,7 @@ function createPageNavigation(pageIndex, container) {
     container.appendChild(buttonsContainer);
 }
 // Render posts inside the user's posts container
-function renderHotspotData(hotspotData, container, country) {
-
+function renderHotspotData(hotspotData, container) {
     const hotspotCard = document.createElement('div');
     hotspotCard.classList.add("hotspot-card");
 
