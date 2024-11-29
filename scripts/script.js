@@ -1,8 +1,9 @@
-// API URL and options
+//HTML elements
 const inputsContainer = document.getElementById('inputs');
 const pageHeader = document.getElementById('heading');
 const pageNavigation = document.getElementById('navigation');
 
+//Global variables & settings
 const itemsOnPage = 80;
 var pageIndexPrevious = 0;
 var pageIndexNext = + itemsOnPage;
@@ -12,9 +13,10 @@ fetchHotspotList(`https://entities.nft.helium.io/v2/hotspots?subnetwork=iot&curs
 
 createCountryCheckBox(inputs);
 createStatusChechBox(inputs);
-
 createHeading(heading);
 
+//Action Functions
+//Seacrching for hotspot by its Asset key
 function searchByAssetKey(key) {
     if (!key == "") {
         hotspotsDiv = document.getElementById('hotspots');
@@ -22,13 +24,13 @@ function searchByAssetKey(key) {
         fetchHotspotData(key);
     }
 }
-
+//Turning page
 function turnPage(pageIndex) {
     hotspotsDiv = document.getElementById('hotspots');
     hotspotsDiv.innerHTML = '';
     fetchHotspots();
 }
-
+//Filtering Data based on values in checkboxes
 function checkCountry(CountryValue, country) {
     if (country.checked) {
         if (country.value == `${CountryValue}`) {
@@ -39,6 +41,7 @@ function checkCountry(CountryValue, country) {
         }
     }
 }
+//Filtering data based on hotspot status
 function checkStatus(StatusValue) {
     var status = document.querySelector('input[name=status]:checked').value;
     var passed;
@@ -54,7 +57,7 @@ function checkStatus(StatusValue) {
         return true;
     }
 }
-
+//Fetching list of hotspot's asset keys
 async function fetchHotspotList(url) {
     const options = {
         method: 'GET'
@@ -72,7 +75,7 @@ async function fetchHotspotList(url) {
         document.getElementById('error').textContent = `Could not fetch hotspot-list: ${error.message}`;
     }
 }
-
+//Fetching all the hotspots 
 async function fetchHotspots() {
     for (var i = pageIndexPrevious; i <= pageIndexNext; i++) {
         fetchHotspotData(hotspotsList.items[i].key_to_asset_key);
@@ -80,8 +83,7 @@ async function fetchHotspots() {
     pageNavigation.innerHTML = "";
     createPageNavigation(pageIndexPrevious, pageNavigation);
 }
-
-// Fetch data from the API
+//Fetching data from each hotspot
 async function fetchHotspotData(key) {
     const options = {
         method: 'GET'
@@ -92,25 +94,30 @@ async function fetchHotspotData(key) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const hotspotData = await response.json();
-        if (checkStatus(hotspotData.hotspot_infos.iot.is_active)) {
-            const countries = document.querySelectorAll('input[id^=country-checkbox-]:checked');
-            if (countries.length != 0) {
-                countries.forEach(country => {
-                    if (checkCountry(hotspotData.hotspot_infos.iot.country, country)) {
-                        renderHotspotData(hotspotData, document.getElementById('hotspots'));
-                    }
-                })
-            }
-            else {
-                renderHotspotData(hotspotData, document.getElementById('hotspots'));
-            }
-        }
-
+        filterData(hotspotData);
     } catch (error) {
         document.getElementById('error').textContent = `Could not fetch hotspot-info: ${error.message}`;
     }
 }
+//Filtering data based on the country and the hotspot status
+function filterData(hotspotData) {
+    if (checkStatus(hotspotData.hotspot_infos.iot.is_active)) {
+        const countries = document.querySelectorAll('input[id^=country-checkbox-]:checked');
+        if (countries.length != 0) {
+            countries.forEach(country => {
+                if (checkCountry(hotspotData.hotspot_infos.iot.country, country)) {
+                    renderHotspotData(hotspotData, document.getElementById('hotspots'));
+                }
+            })
+        }
+        else {
+            renderHotspotData(hotspotData, document.getElementById('hotspots'));
+        }
+    }
+}
 
+//Creation functions
+//Create Status radials
 function createStatusChechBox(container) {
     //Create checkboxes for state of the Hotspot
     const radiosContainer = document.createElement('div');
@@ -156,7 +163,7 @@ function createStatusChechBox(container) {
 
     container.appendChild(radiosContainer);
 }
-
+//Create checkboxes
 function createCountryCheckBox(container) {
     const countries = ['Ireland', 'United States', 'Canada', 'Česko', 'Slovensko', 'United Kingdom'];
 
@@ -186,13 +193,13 @@ function createCountryCheckBox(container) {
         container.appendChild(checkboxesContainer);
     })
 }
-
+//Create heading 
 function createHeading(container) {
     const heading = document.createElement('h1');
     heading.textContent = "Hotspot Viewer"
     container.appendChild(heading);
 }
-
+//Create text inputs 
 function createTextInputs(container) {
     const textInputContainer = document.createElement('div');
     textInputContainer.classList.add('inputContainers');
@@ -217,7 +224,7 @@ function createTextInputs(container) {
     textInputContainer.appendChild(buttonContainer);
     container.appendChild(textInputContainer);
 }
-
+//Create button for fetching hotspots based filters
 function createFetchButton(container) {
     const buttonContainer = document.createElement('div');
 
@@ -234,6 +241,7 @@ function createFetchButton(container) {
     buttonContainer.appendChild(fetchBtn);
     container.appendChild(buttonContainer);
 }
+//Create page navigation at the bottom of the page
 function createPageNavigation(pageIndex, container) {
     const buttonsContainer = document.createElement('div');
     buttonsContainer.classList.add('inputContainers');
@@ -274,6 +282,7 @@ function createPageNavigation(pageIndex, container) {
 }
 // Render posts inside the user's posts container
 function renderHotspotData(hotspotData, container) {
+    
     const hotspotCard = document.createElement('div');
     hotspotCard.classList.add("hotspot-card");
 
