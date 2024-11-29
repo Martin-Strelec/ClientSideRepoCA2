@@ -1,41 +1,46 @@
 // API URL and options
-createElements(document.getElementById('inputs'));
-//fetchHotspotList(`https://entities.nft.helium.io/v2/hotspots?subnetwork=iot&cursor=`);
+createCityCheckBox(document.getElementById('inputs'));
+createStatusChechBox(document.getElementById('inputs'));
+createHeading(document.createElement('h1'));
 
-function buttonFetch() {
+fetchHotspotList(`https://entities.nft.helium.io/v2/hotspots?subnetwork=iot&cursor=`);
+
+function searchByAssetKey() {
     hotspotsDiv = document.getElementById('hotspots');
     hotspotsDiv.innerHTML = '';
-    fetchHotspotList(`https://entities.nft.helium.io/v2/hotspots?subnetwork=iot&cursor=`)
+    fetchHotspotData(key);
 }
 
-async function fetchHotspotList(url, numberOfHotspots) {
-    const hotspotContainer = document.getElementById("hotspots");
+function turnPage() {
+    hotspotsDiv = document.getElementById('hotspots');
+    hotspotsDiv.innerHTML = '';
+    fetchHotspots();
+}
+
+async function fetchHotspotList(url) {
     const options = {
         method: 'GET'
     };
-
     try {
         const response = await fetch(url, options);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const hotspotList = await response.json();
-        
-        const selectedRadio = document.querySelectorAll("input[type='radio']:checked");
-        if (selectedRadio.length == 0) {
-            hotspotList.items.forEach(hotspot => {
-                fetchHotspotData(hotspot.key_to_asset_key);
-            })
-        }
-        else {
-            for (var i = 0; i < selectedRadio[0].defaultValue; i++) {
-                fetchHotspotData(hotspotList.items[i].key_to_asset_key);
-            }
-        }
-        
+        fetchHotspots(hotspotList);
     } catch (error) {
-        document.getElementById('heading').textContent = `Could not fetch weather-info: ${error.message}`;
+        document.getElementById('heading').textContent = `Could not fetch hotspot-list: ${error.message}`;
     }
+}
+
+async function fetchHotspots(hotspotList) {
+    var startingPoint = 0;
+    const itemsOnPage = 50;
+
+    for (var i = startingPoint; i < startingPoint + itemsOnPage; i++) {
+        fetchHotspotData(hotspotList.items[i].key_to_asset_key);
+    }
+    startingPoint += itemsOnPage;
 }
 
 // Fetch data from the API
@@ -49,134 +54,145 @@ async function fetchHotspotData(key) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const hotspotData = await response.json();
-
-        const checkboxes = document.querySelectorAll("input[type='checkbox']")
-        checkboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                renderHotspotData(hotspotData, document.getElementById('hotspots'), checkbox.value);
-            }
-        })
+        renderHotspotData(hotspotData, document.getElementById('hotspots'), null);
     } catch (error) {
         document.getElementById('heading').textContent = `Could not fetch hotspot-info: ${error.message}`;
     }
 }
 
-
-
-function createElements(container) {
-    // Create the checkbox
-
+function createStatusChechBox(container) {
+    //Create checkboxes for state of the Hotspot
     const checkboxesContainer = document.createElement('div');
     checkboxesContainer.classList.add('inputContainers');
-    const cities = ["Ireland", "United States", "United Kingdom", "Canada", "Česko", "Slovensko"];
-    cities.forEach(city => {
+
+    const header = document.createElement('h3');
+
+    header.textContent = "Status: ";
+    checkboxesContainer.appendChild(header);
+
+    const statuses = [true, false];
+    statuses.forEach(status => {
         const checkboxContainer = document.createElement('div');
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `city-checkbox-${city}`;
-        checkbox.value = `${city}`;
+        checkbox.id = `city-checkbox-${status ? "active" : "notActive"}`;
+        checkbox.value = `${status}`;
         const label = document.createElement('label');
-        label.textContent = `${city}`;
-        label.setAttribute("for", `city-checkbox-${city}`);
+        label.textContent = `${status ? "Active" : "Not Active"}`;
+        label.setAttribute("for", `city-checkbox-${status}`);
+
+
+
+        checkboxContainer.appendChild(label);
+        checkboxContainer.appendChild(checkbox);
+        checkboxesContainer.appendChild(checkboxContainer);
+    })
+
+    container.appendChild(checkboxesContainer);
+}
+
+function createCountryCheckBox(container) {
+
+    // Create the checkbox
+    const checkboxesContainer = document.createElement('div');
+    checkboxesContainer.classList.add('inputContainers');
+    const header = document.createElement('h3');
+
+    header.textContent = "Countries: ";
+    checkboxesContainer.appendChild(header);
+
+    const countries = ["Ireland", "United States", "United Kingdom", "Canada", "Česko", "Slovensko"];
+    countries.forEach(country => {
+        const checkboxContainer = document.createElement('div');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `city-checkbox-${country}`;
+        checkbox.value = `${country}`;
+        const label = document.createElement('label');
+        label.textContent = `${country}`;
+        label.setAttribute("for", `city-checkbox-${country}`);
 
         checkboxContainer.appendChild(label);
         checkboxContainer.appendChild(checkbox);
         checkboxesContainer.appendChild(checkboxContainer);
         container.appendChild(checkboxesContainer);
     })
+}
 
-    const radioButtonsContainer = document.createElement('div');
-    radioButtonsContainer.classList.add('inputContainers');
-    const values = [50, 100, 200, 500];
-    values.forEach(value => {
-        const radioContainer = document.createElement('div');
+function createHeading (container) {
+    const heading = document.createElement('h1');
+    heading.textContent = "Hotspot Viewer"
+    container.appendChild(heading);
+}
 
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.id = `value-radio-${value}`;
-        radio.value = `${value}`;
-        radio.name = "numberOfHotspots";
-        const label = document.createElement('label');
-        label.textContent = `${value}`;
-        label.setAttribute("for", `numberOfHotspots-radio-${value}`);
-
-        radioContainer.appendChild(label);
-        radioContainer.appendChild(radio);
-        radioButtonsContainer.appendChild(radioContainer);
-        container.appendChild(radioButtonsContainer);
-    })
+function createTextInputs(container) {
 
     const buttonContainer = document.createElement('div');
     buttonContainer.classList.add("buttonContainer");
 
-    const humidityInput = document.createElement('input');
-    humidityInput.type = 'text';
-    humidityInput.id = `hotspostLocationInput`;
-    humidityInput.textContent = 'Custom location: '
-    buttonContainer.appendChild(humidityInput);
+    // const assetKey = document.createElement('input');
+    // humidityInput.type = 'text';
+    // humidityInput.id = `hotspostLocationInput`;
+    // humidityInput.textContent = 'Custom location: '
+    // buttonContainer.appendChild(humidityInput);
 
-    const fetchButton = document.createElement('button');
-    fetchButton.textContent = 'Fetch Hotspots';
-    fetchButton.addEventListener('click', buttonFetch);
-    buttonContainer.appendChild(fetchButton);
+    // const fetchButton = document.createElement('button');
+    // fetchButton.textContent = 'Fetch Hotspots';
+    // fetchButton.addEventListener('click', buttonFetch);
+    // buttonContainer.appendChild(fetchButton);
 
-    container.appendChild(buttonContainer);
-
-    const heading = document.createElement('h1');
-    heading.textContent = "Hotspot Viewer"
-    document.getElementById("heading").appendChild(heading);
+    // container.appendChild(buttonContainer);
 }
 
 // Render posts inside the user's posts container
 function renderHotspotData(hotspotData, container, country) {
-    if (country == hotspotData.hotspot_infos.iot.country || country == null) {
 
-        const hotspotCard = document.createElement('div');
-        hotspotCard.classList.add("hotspot-card");
+    const hotspotCard = document.createElement('div');
+    hotspotCard.classList.add("hotspot-card");
 
-        const hotspotCardDetails = document.createElement('div');
-        hotspotCardDetails.classList.add("hotspot-details");
+    const hotspotCardDetails = document.createElement('div');
+    hotspotCardDetails.classList.add("hotspot-details");
 
-        const hotspotName = document.createElement('h3');
-        hotspotName.textContent = `Name: ${hotspotData.name}`;
-        hotspotName.classList.add("hotspot-details");
+    const hotspotName = document.createElement('h3');
+    hotspotName.textContent = `Name: ${hotspotData.name}`;
+    hotspotName.classList.add("hotspot-details");
 
-        const hotspotDescription = document.createElement('p');
-        hotspotDescription.textContent = `Description: ${hotspotData.description}`;
-        hotspotDescription.classList.add("hotspot-details");
+    const hotspotDescription = document.createElement('p');
+    hotspotDescription.textContent = `Description: ${hotspotData.description}`;
+    hotspotDescription.classList.add("hotspot-details");
 
-        const hotspotImage = document.createElement('img');
-        hotspotImage.setAttribute("src", `${hotspotData.image}`);
-        hotspotImage.classList.add("hotspot-card");
+    const hotspotImage = document.createElement('img');
+    hotspotImage.setAttribute("src", `${hotspotData.image}`);
+    hotspotImage.classList.add("hotspot-card");
 
-        const hotspotHexLocationLink = document.createElement('a');
-        hotspotHexLocationLink.href = `https://explorer.helium.com/hex/${hotspotData.hotspot_infos.iot.location}`;
-        hotspotHexLocationLink.textContent = `${hotspotData.hotspot_infos.iot.location}`;
-        const hotspotHexLocation = document.createElement('p');
-        hotspotHexLocation.href = `https://explorer.helium.com/hex/${hotspotData.hotspot_infos.iot.location}`;
-        hotspotHexLocation.textContent = `Location Hex: `;
-        hotspotHexLocation.classList.add("hotspot-details");
+    const hotspotHexLocationLink = document.createElement('a');
+    hotspotHexLocationLink.href = `https://explorer.helium.com/hex/${hotspotData.hotspot_infos.iot.location}`;
+    hotspotHexLocationLink.textContent = `${hotspotData.hotspot_infos.iot.location}`;
+    const hotspotHexLocation = document.createElement('p');
+    hotspotHexLocation.href = `https://explorer.helium.com/hex/${hotspotData.hotspot_infos.iot.location}`;
+    hotspotHexLocation.textContent = `Location Hex: `;
+    hotspotHexLocation.classList.add("hotspot-details");
 
-        const hotspotCity = document.createElement('p');
-        hotspotCity.textContent = `City: ${hotspotData.hotspot_infos.iot.city == null ? "Not stated" : hotspotData.hotspot_infos.iot.city}`;
-        hotspotCity.classList.add("hotspot-details");
+    const hotspotCity = document.createElement('p');
+    hotspotCity.textContent = `City: ${hotspotData.hotspot_infos.iot.city == null ? "Not stated" : hotspotData.hotspot_infos.iot.city}`;
+    hotspotCity.classList.add("hotspot-details");
 
-        const hotspotCountry = document.createElement('p');
-        hotspotCountry.textContent = `Country: ${hotspotData.hotspot_infos.iot.country}`;
-        hotspotCountry.classList.add("hotspot-details");
+    const hotspotCountry = document.createElement('p');
+    hotspotCountry.textContent = `Country: ${hotspotData.hotspot_infos.iot.country}`;
+    hotspotCountry.classList.add("hotspot-details");
 
-        hotspotCardDetails.appendChild(hotspotName);
+    hotspotCardDetails.appendChild(hotspotName);
 
-        hotspotHexLocation.appendChild(hotspotHexLocationLink);
-        hotspotCardDetails.appendChild(hotspotHexLocation);
+    hotspotHexLocation.appendChild(hotspotHexLocationLink);
+    hotspotCardDetails.appendChild(hotspotHexLocation);
 
-        hotspotCardDetails.appendChild(hotspotCountry);
-        hotspotCardDetails.appendChild(hotspotCity);
-        hotspotCardDetails.appendChild(hotspotDescription);
+    hotspotCardDetails.appendChild(hotspotCountry);
+    hotspotCardDetails.appendChild(hotspotCity);
+    hotspotCardDetails.appendChild(hotspotDescription);
 
-        hotspotCard.appendChild(hotspotImage);
-        hotspotCard.appendChild(hotspotCardDetails)
-        container.appendChild(hotspotCard);
-    }
+    hotspotCard.appendChild(hotspotImage);
+    hotspotCard.appendChild(hotspotCardDetails)
+    container.appendChild(hotspotCard);
 }
