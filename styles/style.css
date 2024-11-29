@@ -1,0 +1,60 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 20px;  
+}
+#heading {
+    text-align: center;
+    margin-bottom: 50px;
+}
+.buttonContainer {
+    width: 50%;
+}
+.inputContainers {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    gap: 20px;
+}
+#inputs {
+    margin: 20px;
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#hotspots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+.hotspot-card {
+    width: 300px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.hotspot-card img {
+    height: auto;
+}
+.hotspot-details {
+    padding-left: 5px;
+    width: 95%;   
+    text-align: left;
+}
+.hotspot-details h3 {   
+    font-size: 1.2em;
+    color: #333;
+}
+.hotspot-details p {
+    margin: 15px 0;
+    word-wrap: break-word;
+    color: #666;
+    font-size: 0.9em;
+}
