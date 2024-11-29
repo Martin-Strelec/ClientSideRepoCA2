@@ -1,17 +1,30 @@
 // API URL and options
-createCityCheckBox(document.getElementById('inputs'));
-createStatusChechBox(document.getElementById('inputs'));
-createHeading(document.createElement('h1'));
+const inputsContainer = document.getElementById('inputs');
+const pageHeader = document.getElementById('heading');
+const pageNavigation = document.getElementById('navigation');
+
+const itemsOnPage = 80;
+var pageIndexPrevious = 0;
+var pageIndexNext =+ itemsOnPage; 
+var hotspotsList;
 
 fetchHotspotList(`https://entities.nft.helium.io/v2/hotspots?subnetwork=iot&cursor=`);
 
-function searchByAssetKey() {
-    hotspotsDiv = document.getElementById('hotspots');
-    hotspotsDiv.innerHTML = '';
-    fetchHotspotData(key);
+createCountryCheckBox(inputs);
+createStatusChechBox(inputs);
+createTextInputs(inputs);
+
+createHeading(heading);
+
+function searchByAssetKey(key) {
+    if (!key == "") {
+        hotspotsDiv = document.getElementById('hotspots');
+        hotspotsDiv.innerHTML = '';
+        fetchHotspotData(key);
+    }
 }
 
-function turnPage() {
+function turnPage(pageIndex) {
     hotspotsDiv = document.getElementById('hotspots');
     hotspotsDiv.innerHTML = '';
     fetchHotspots();
@@ -26,21 +39,19 @@ async function fetchHotspotList(url) {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const hotspotList = await response.json();
-        fetchHotspots(hotspotList);
+        hotspotsList = await response.json();
+        fetchHotspots();
     } catch (error) {
         document.getElementById('heading').textContent = `Could not fetch hotspot-list: ${error.message}`;
     }
 }
 
-async function fetchHotspots(hotspotList) {
-    var startingPoint = 0;
-    const itemsOnPage = 50;
-
-    for (var i = startingPoint; i < startingPoint + itemsOnPage; i++) {
-        fetchHotspotData(hotspotList.items[i].key_to_asset_key);
+async function fetchHotspots() {
+    for (var i = pageIndexPrevious; i <= pageIndexNext; i++) {
+        fetchHotspotData(hotspotsList.items[i].key_to_asset_key);
     }
-    startingPoint += itemsOnPage;
+    pageNavigation.innerHTML = "";
+    createPageNavigation(pageIndexPrevious, pageNavigation);
 }
 
 // Fetch data from the API
@@ -82,8 +93,6 @@ function createStatusChechBox(container) {
         label.textContent = `${status ? "Active" : "Not Active"}`;
         label.setAttribute("for", `city-checkbox-${status}`);
 
-
-
         checkboxContainer.appendChild(label);
         checkboxContainer.appendChild(checkbox);
         checkboxesContainer.appendChild(checkboxContainer);
@@ -121,31 +130,75 @@ function createCountryCheckBox(container) {
     })
 }
 
-function createHeading (container) {
+function createHeading(container) {
     const heading = document.createElement('h1');
     heading.textContent = "Hotspot Viewer"
     container.appendChild(heading);
 }
 
 function createTextInputs(container) {
-
+    const textInputContainer = document.createElement('div');
+    textInputContainer.classList.add('inputContainers');
     const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add("buttonContainer");
 
-    // const assetKey = document.createElement('input');
-    // humidityInput.type = 'text';
-    // humidityInput.id = `hotspostLocationInput`;
-    // humidityInput.textContent = 'Custom location: '
-    // buttonContainer.appendChild(humidityInput);
+    const header = document.createElement('h3');
+    header.textContent = `Search by Asset Key: `;
 
-    // const fetchButton = document.createElement('button');
-    // fetchButton.textContent = 'Fetch Hotspots';
-    // fetchButton.addEventListener('click', buttonFetch);
-    // buttonContainer.appendChild(fetchButton);
+    const assetKeyTextInput = document.createElement('input');
+    assetKeyTextInput.type = 'text';
+    assetKeyTextInput.id = `assetKeyTextInput`;
 
-    // container.appendChild(buttonContainer);
+    const assetKeyBtn = document.createElement('input');
+    assetKeyBtn.type = 'button';
+    assetKeyBtn.id = 'assetKeyBtn';
+    assetKeyBtn.value = 'Search';
+    assetKeyBtn.addEventListener('click', searchByAssetKey(assetKeyTextInput.value));
+
+    buttonContainer.appendChild(assetKeyTextInput);
+    buttonContainer.appendChild(assetKeyBtn);
+    textInputContainer.appendChild(header);
+    textInputContainer.appendChild(buttonContainer);
+    container.appendChild(textInputContainer);
 }
 
+function createPageNavigation(pageIndex, container) {
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.classList.add('inputContainers');
+
+    const assetKeyTextInput = document.createElement('input');
+    assetKeyTextInput.type = 'text';
+    assetKeyTextInput.id = `assetKeyTextInput`;
+
+    if (pageIndex > 0) {
+
+        const previousPage = document.createElement('input');
+        previousPage.type = 'button';
+        previousPage.id = 'assetKeyBtn';
+        previousPage.value = 'Previous Page';
+        previousPage.addEventListener('click',() => {
+            
+            pageIndexNext = pageIndexPrevious;
+            pageIndexPrevious -= itemsOnPage;
+            turnPage();
+        });
+        buttonsContainer.appendChild(previousPage);
+    }
+
+    if ((pageIndex + itemsOnPage) < hotspotsList.items.length) {
+        const nextPage = document.createElement('input');
+        nextPage.type = 'button';
+        nextPage.id = 'assetKeyBtn';
+        nextPage.value = 'NextPage';
+        nextPage.addEventListener('click',() => {
+            pageIndexPrevious = pageIndexNext;
+            pageIndexNext += itemsOnPage;
+            turnPage();
+        });
+        buttonsContainer.appendChild(nextPage);
+    }
+
+    container.appendChild(buttonsContainer);
+}
 // Render posts inside the user's posts container
 function renderHotspotData(hotspotData, container, country) {
 
