@@ -21,6 +21,8 @@ function searchByAssetKey(key) {
     if (!key == "") {
         hotspotsDiv = document.getElementById('hotspots');
         hotspotsDiv.innerHTML = '';
+        navDiv = document.getElementById('navigation');
+        navDiv.style.visibility = 'hidden';
         fetchHotspotData(key);
     }
 }
@@ -124,43 +126,33 @@ function createStatusChechBox(container) {
     radiosContainer.classList.add('inputContainers');
 
     const header = document.createElement('h3');
-
     header.textContent = "Status: ";
     radiosContainer.appendChild(header);
 
-    const radioContainer = document.createElement('div');
+    const statuses = [
+        { value: 'All', label: 'All', checked: true },
+        { value: true, label: 'Active', checked: false },
+        { value: false, label: 'Not Active', checked: false }
+    ];
 
-    const radio = document.createElement('input');
-    radio.type = 'radio';
-    radio.id = `status-radio-all`;
-    radio.value = 'All';
-    radio.name = 'status';
-    radio.setAttribute('checked', true);
-    const label = document.createElement('label');
-    label.textContent = `All`;
-    label.setAttribute("for", `status-radio-all`);
-
-    radioContainer.appendChild(label);
-    radioContainer.appendChild(radio);
-    radiosContainer.appendChild(radioContainer);
-
-    const statuses = [true, false];
     statuses.forEach(status => {
-
+        const radioContainer = document.createElement('div');
         const radio = document.createElement('input');
         radio.type = 'radio';
-        radio.id = `status-radio-${status ? "true" : "false"}`;
-        radio.value = status;
+        radio.id = `status-radio-${status.value}`;
+        radio.value = status.value;
         radio.name = 'status';
+        if (status.checked) {
+            radio.setAttribute('checked', true);
+        }
         const label = document.createElement('label');
-        label.textContent = `${status ? "Active" : "Not Active"}`;
-        label.setAttribute("for", `status-radio-${status}`);
+        label.textContent = status.label;
+        label.setAttribute("for", `status-radio-${status.value}`);
 
         radioContainer.appendChild(label);
         radioContainer.appendChild(radio);
         radiosContainer.appendChild(radioContainer);
     })
-
     container.appendChild(radiosContainer);
 }
 //Create checkboxes
@@ -177,7 +169,6 @@ function createCountryCheckBox(container) {
 
     countries.forEach(country => {
         const checkboxContainer = document.createElement('div');
-
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = `country-checkbox-${country}`;
@@ -216,6 +207,7 @@ function createTextInputs(container) {
     assetKeyBtn.type = 'button';
     assetKeyBtn.id = 'assetKeyBtn';
     assetKeyBtn.value = 'Search';
+    //assetKeyBtn.classList.add('buttonStyle');
     assetKeyBtn.addEventListener('click', () => { searchByAssetKey(assetKeyTextInput.value) });
 
     buttonContainer.appendChild(assetKeyTextInput);
@@ -232,8 +224,11 @@ function createFetchButton(container) {
     fetchBtn.type = 'button';
     fetchBtn.id = 'fetchBtn';
     fetchBtn.value = 'Find Hotspots';
+    fetchBtn.classList.add('buttonStyle');
     fetchBtn.addEventListener('click', () => {
         document.getElementById('hotspots').innerHTML = "";
+        navDiv = document.getElementById('navigation');
+        navDiv.style.visibility = 'visible';
         fetchHotspots()
     })
 
@@ -250,12 +245,24 @@ function createPageNavigation(pageIndex, container) {
     assetKeyTextInput.type = 'text';
     assetKeyTextInput.id = `assetKeyTextInput`;
 
+    const homePage = document.createElement('input');
+    homePage.type = 'button';
+    homePage.id = 'homePageBtn';
+    homePage.value = 'Home Page';
+    homePage.classList.add('buttonStyle');
+    homePage.addEventListener('click', () => {
+        pageIndexPrevious = 0;
+        turnPage();
+    });
+    buttonsContainer.appendChild(homePage);
+
     if (pageIndex > 0) {
 
         const previousPage = document.createElement('input');
         previousPage.type = 'button';
-        previousPage.id = 'assetKeyBtn';
+        previousPage.id = 'previousPageBtn';
         previousPage.value = 'Previous Page';
+        previousPage.classList.add('buttonStyle');
         previousPage.addEventListener('click', () => {
 
             pageIndexNext = pageIndexPrevious;
@@ -268,8 +275,9 @@ function createPageNavigation(pageIndex, container) {
     if ((pageIndex + itemsOnPage) < hotspotsList.items.length) {
         const nextPage = document.createElement('input');
         nextPage.type = 'button';
-        nextPage.id = 'assetKeyBtn';
+        nextPage.id = 'nextPageBtn';
         nextPage.value = 'NextPage';
+        nextPage.classList.add('buttonStyle');
         nextPage.addEventListener('click', () => {
             pageIndexPrevious = pageIndexNext;
             pageIndexNext += itemsOnPage;
@@ -282,7 +290,7 @@ function createPageNavigation(pageIndex, container) {
 }
 // Render posts inside the user's posts container
 function renderHotspotData(hotspotData, container) {
-    
+
     const hotspotCard = document.createElement('div');
     hotspotCard.classList.add("hotspot-card");
 
